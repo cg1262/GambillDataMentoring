@@ -18,6 +18,10 @@ client = OpenAI(api_key=openai_key)
 azure_conn_str = st.secrets["azure_blob"]["connection_string"]
 container_name = st.secrets["azure_blob"]["container_name"]
 st.session_state.score = 0 
+feedback_summary = ''
+mentee_email = ''
+mentee_name = ''
+
 def upload_to_azure_blob(data, filename):
     blob_service = BlobServiceClient.from_connection_string(azure_conn_str)
     blob_client = blob_service.get_blob_client(container=container_name, blob=filename)
