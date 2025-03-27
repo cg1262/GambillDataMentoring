@@ -127,7 +127,7 @@ Skills:
         st.session_state.quiz_submitted = False
         st.session_state.project = json.loads(project_response.choices[0].message.content)
     except Exception as e:
-        st.error("There was a problem generating your quiz.")
+        st.error(f"There was a problem generating your quiz.{e}")
         st.stop()
 
 # --- Show Quiz ---
