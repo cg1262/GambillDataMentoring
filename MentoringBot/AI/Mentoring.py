@@ -121,12 +121,6 @@ Skills:
         temperature=0.5
     )
 
-    project_response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": project_prompt}],
-        temperature=0.5
-    )
-
     try:
         st.session_state.questions = json.loads(response.choices[0].message.content)
         st.session_state.quiz_started = True
