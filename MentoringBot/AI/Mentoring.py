@@ -156,6 +156,49 @@ if st.session_state.quiz_started:
         st.session_state.quiz_submitted = True
         st.session_state.user_answers = user_answers
         st.session_state.score = score 
+
+
+def send_followup_email(to_email, mentee_name, score, feedback_summary):
+    subject = f"Your Data Engineering Assessment Results – {mentee_name}"
+    calendly_link = "https://calendly.com/chris-gambill-gambilldataengineering/data-consulting-initial-meeting"
+
+    body = f"""
+Hi {mentee_name},
+
+Thanks for completing the skill assessment! You are a great fit for our mentoring program!
+
+🎯 Your Quiz Score: {score}/10
+
+📋 Feedback Summary:
+{feedback_summary}
+
+If you're ready to chat about your data journey or mentorship options, feel free to book a time with me here:
+{calendly_link}
+
+Looking forward to connecting!
+
+– Chris Gambill
+Gambill Data
+chris.gambill@gambilldataengineering.com
+    Follow us on LinkedIn https://www.linkedin.com/company/gambill-data
+🌐 Visit our website at https://www.gambilldataengineering.com
+Check out our YouTube channel https://www.youtube.com/@gambilldataengineering 
+            """
+
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = st.secrets["email"]["sender"]
+    msg['To'] = to_email
+
+    try:
+        with smtplib.SMTP(st.secrets["email"]["smtp_server"], st.secrets["email"]["smtp_port"]) as server:
+            server.starttls()
+            server.login(st.secrets["email"]["sender"], st.secrets["email"]["password"])
+            server.send_message(msg)
+        st.success("📧 Follow-up email sent!")
+    except Exception as e:
+        st.error(f"❌ Failed to send email: {e}")
+
 # --- Quiz Results ---
 if st.session_state.quiz_submitted:
     st.success(f"🎉 You scored {st.session_state.score} out of {len(st.session_state.questions)}!")
@@ -231,47 +274,6 @@ if st.session_state.quiz_submitted:
 
     st.write("✅ Results saved to cloud. Here's your personalized feedback:")
     st.markdown(f"**Feedback Summary:**\n\n{feedback_summary}")
+    send_followup_email(mentee_email, mentee_name, st.session_state.score, feedback_summary)
 
 
-def send_followup_email(to_email, mentee_name, score, feedback_summary):
-    subject = f"Your Data Engineering Assessment Results – {mentee_name}"
-    calendly_link = "https://calendly.com/chris-gambill-gambilldataengineering/data-consulting-initial-meeting"
-
-    body = f"""
-Hi {mentee_name},
-
-Thanks for completing the skill assessment! You are a great fit for our mentoring program!
-
-🎯 Your Quiz Score: {score}/10
-
-📋 Feedback Summary:
-{feedback_summary}
-
-If you're ready to chat about your data journey or mentorship options, feel free to book a time with me here:
-{calendly_link}
-
-Looking forward to connecting!
-
-– Chris Gambill
-Gambill Data
-chris.gambill@gambilldataengineering.com
-    Follow us on LinkedIn https://www.linkedin.com/company/gambill-data
-🌐 Visit our website at https://www.gambilldataengineering.com
-Check out our YouTube channel https://www.youtube.com/@gambilldataengineering 
-            """
-
-    msg = MIMEText(body)
-    msg['Subject'] = subject
-    msg['From'] = st.secrets["email"]["sender"]
-    msg['To'] = to_email
-
-    try:
-        with smtplib.SMTP(st.secrets["email"]["smtp_server"], st.secrets["email"]["smtp_port"]) as server:
-            server.starttls()
-            server.login(st.secrets["email"]["sender"], st.secrets["email"]["password"])
-            server.send_message(msg)
-        st.success("📧 Follow-up email sent!")
-    except Exception as e:
-        st.error(f"❌ Failed to send email: {e}")
-
-send_followup_email(mentee_email, mentee_name, st.session_state.score, feedback_summary)
