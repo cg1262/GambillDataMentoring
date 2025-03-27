@@ -1,0 +1,4 @@
+streamlit
+openai
+azure-storage-blob
+email-validator
