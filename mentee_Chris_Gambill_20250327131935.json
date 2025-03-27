@@ -1,0 +1,15 @@
+{
+  "timestamp": "2025-03-27T13:19:35.144007",
+  "name": "Chris Gambill",
+  "sql_level": "Intermediate",
+  "python_level": "Advanced",
+  "etl_experience": "Yes. Informatica, ADF, SSIS, dts, etc. ",
+  "cloud_experience": [
+    "Azure",
+    "AWS"
+  ],
+  "project_experience": "Telemetry for aircrafts",
+  "future_goal": "Consulting a lot",
+  "learning_style": "Hands-on projects",
+  "time_commitment": 5
+}
