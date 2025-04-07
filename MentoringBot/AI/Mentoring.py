@@ -1,7 +1,6 @@
 """
 Created by: Chris Gambill
 Created on: 2025-03-27
-Last Edited: 2025-04-07
 """
 
 import streamlit as st
@@ -15,11 +14,14 @@ from email.mime.text import MIMEText
 # --- Setup API keys ---
 openai_key = st.secrets.get("OPENAI_API_KEY", "your-openai-key")
 client = OpenAI(api_key=openai_key)
-st.session_state.score = 0 
+
 azure_conn_str = st.secrets["azure_blob"]["connection_string"]
 container_name = st.secrets["azure_blob"]["container_name"]
 st.session_state.score = 0 
 feedback_summary = ''
+mentee_email = ''
+mentee_name = ''
+
 def upload_to_azure_blob(data, filename):
     blob_service = BlobServiceClient.from_connection_string(azure_conn_str)
     blob_client = blob_service.get_blob_client(container=container_name, blob=filename)
@@ -98,7 +100,7 @@ if st.button("Submit Self-Assessment"):
 
     prompt = f"""
 You are a professional technical mentor. Based on the following self-rated skills, generate 10 multiple-choice questions (1 correct answer each) to assess their actual skill level. Focus on data engineering topics like SQL, Python, ETL, cloud, data modeling, APIs, and tools like Power BI.
-The first option should be a default selection saying 'please select from the below options' so that the correct answer is not the default answer. 
+
 Use a JSON format:
 [
   {{
@@ -119,19 +121,12 @@ Skills:
         temperature=0.5
     )
 
-    project_response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": project_prompt}],
-        temperature=0.5
-    )
-
     try:
         st.session_state.questions = json.loads(response.choices[0].message.content)
         st.session_state.quiz_started = True
         st.session_state.quiz_submitted = False
-        st.session_state.project = json.loads(project_response.choices[0].message.content)
     except Exception as e:
-        st.error("There was a problem generating your quiz.")
+        st.error(f"There was a problem generating your quiz.{e}")
         st.stop()
 
 # --- Show Quiz ---
@@ -154,12 +149,56 @@ if st.session_state.quiz_started:
         st.session_state.quiz_submitted = True
         st.session_state.user_answers = user_answers
         st.session_state.score = score 
+
+
+def send_followup_email(to_email, mentee_name, score, feedback_summary):
+    subject = f"Your Data Engineering Assessment Results – {mentee_name}"
+    calendly_link = "https://calendly.com/chris-gambill-gambilldataengineering/data-consulting-initial-meeting"
+
+    body = f"""
+Hi {mentee_name},
+
+Thanks for completing the skill assessment! You are a great fit for our mentoring program!
+
+🎯 Your Quiz Score: {score}/10
+
+📋 Feedback Summary:
+{feedback_summary}
+
+If you're ready to chat about your data journey or mentorship options, feel free to book a time with me here:
+{calendly_link}
+
+Looking forward to connecting!
+
+– Chris Gambill
+Gambill Data
+chris.gambill@gambilldataengineering.com
+    Follow us on LinkedIn https://www.linkedin.com/company/gambill-data
+🌐 Visit our website at https://www.gambilldataengineering.com
+Check out our YouTube channel https://www.youtube.com/@gambilldataengineering 
+            """
+
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = st.secrets["email"]["sender"]
+    msg['To'] = to_email
+
+    try:
+        with smtplib.SMTP(st.secrets["email"]["smtp_server"], st.secrets["email"]["smtp_port"]) as server:
+            server.starttls()
+            server.login(st.secrets["email"]["sender"], st.secrets["email"]["password"])
+            server.send_message(msg)
+        st.success("📧 Follow-up email sent!")
+    except Exception as e:
+        st.error(f"❌ Failed to send email: {e}")
+
 # --- Quiz Results ---
 if st.session_state.quiz_submitted:
     st.success(f"🎉 You scored {st.session_state.score} out of {len(st.session_state.questions)}!")
 
     summary_prompt = f"""
-    You are a technical mentor. Based on this quiz score ({st.session_state.score}/{len(st.session_state.questions)}) and the quiz content below, write a short feedback summary (~3-5 sentences) highlighting areas of strength and what the mentee should focus on improving. In addition, for the incorrect answers, please provide the question and correct answer. 
+    You are a technical mentor. Based on this quiz score ({st.session_state.score}/{len(st.session_state.questions)}) and the quiz content below, write a short feedback summary (~3-5 sentences) highlighting areas of strength and what the mentee should focus on improving.
+
     Quiz:
     {json.dumps(st.session_state.questions, indent=2)}
     """
@@ -228,47 +267,5 @@ if st.session_state.quiz_submitted:
 
     st.write("✅ Results saved to cloud. Here's your personalized feedback:")
     st.markdown(f"**Feedback Summary:**\n\n{feedback_summary}")
+    send_followup_email(mentee_email, mentee_name, st.session_state.score, feedback_summary)
 
-
-def send_followup_email(to_email, mentee_name, score, feedback_summary):
-    subject = f"Your Data Engineering Assessment Results – {mentee_name}"
-    calendly_link = "https://calendly.com/chris-gambill-gambilldataengineering/data-consulting-initial-meeting"
-
-    body = f"""
-Hi {mentee_name},
-
-Thanks for completing the skill assessment! You are a great fit for our mentoring program!
-
-🎯 Your Quiz Score: {score}/10
-
-📋 Feedback Summary:
-{feedback_summary}
-
-If you're ready to chat about your data journey or mentorship options, feel free to book a time with me here:
-{calendly_link}
-
-Looking forward to connecting!
-
-– Chris Gambill
-Gambill Data
-chris.gambill@gambilldataengineering.com
-    Follow us on LinkedIn https://www.linkedin.com/company/gambill-data
-🌐 Visit our website at https://www.gambilldataengineering.com
-Check out our YouTube channel https://www.youtube.com/@gambilldataengineering 
-            """
-
-    msg = MIMEText(body)
-    msg['Subject'] = subject
-    msg['From'] = st.secrets["email"]["sender"]
-    msg['To'] = to_email
-
-    try:
-        with smtplib.SMTP(st.secrets["email"]["smtp_server"], st.secrets["email"]["smtp_port"]) as server:
-            server.starttls()
-            server.login(st.secrets["email"]["sender"], st.secrets["email"]["password"])
-            server.send_message(msg)
-        st.success("📧 Follow-up email sent!")
-    except Exception as e:
-        st.error(f"❌ Failed to send email: {e}")
-
-send_followup_email(mentee_email, mentee_name, st.session_state.score, feedback_summary)
