@@ -1,6 +1,7 @@
 """
 Created by: Chris Gambill
 Created on: 2025-03-27
+Edited on: 2025-04-07
 """
 
 import streamlit as st
@@ -100,7 +101,7 @@ if st.button("Submit Self-Assessment"):
 
     prompt = f"""
 You are a professional technical mentor. Based on the following self-rated skills, generate 10 multiple-choice questions (1 correct answer each) to assess their actual skill level. Focus on data engineering topics like SQL, Python, ETL, cloud, data modeling, APIs, and tools like Power BI.
-
+Add a default selection for each question stating to select an option from below. 
 Use a JSON format:
 [
   {{
@@ -198,7 +199,7 @@ if st.session_state.quiz_submitted:
 
     summary_prompt = f"""
     You are a technical mentor. Based on this quiz score ({st.session_state.score}/{len(st.session_state.questions)}) and the quiz content below, write a short feedback summary (~3-5 sentences) highlighting areas of strength and what the mentee should focus on improving.
-
+    Please also provide feedback on the specifc questions and correct answers for any incorrect quiz responses. 
     Quiz:
     {json.dumps(st.session_state.questions, indent=2)}
     """
