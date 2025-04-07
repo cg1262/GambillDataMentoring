@@ -159,9 +159,7 @@ if st.session_state.quiz_submitted:
     st.success(f"🎉 You scored {st.session_state.score} out of {len(st.session_state.questions)}!")
 
     summary_prompt = f"""
-    You are a technical mentor. Based on this quiz score ({st.session_state.score}/{len(st.session_state.questions)}) and the quiz content below, write a short feedback summary (~3-5 sentences) highlighting areas of strength and what the mentee should focus on improving.
-    In addition, for the incorrect answers, please provide the question and correct answer. 
-    
+    You are a technical mentor. Based on this quiz score ({st.session_state.score}/{len(st.session_state.questions)}) and the quiz content below, write a short feedback summary (~3-5 sentences) highlighting areas of strength and what the mentee should focus on improving. In addition, for the incorrect answers, please provide the question and correct answer. 
     Quiz:
     {json.dumps(st.session_state.questions, indent=2)}
     """
