@@ -147,8 +147,16 @@ YouTube: https://www.youtube.com/@gambilldataengineering
     msg["From"] = cfg["sender"]
     msg["To"] = to_email
 
-    with smtplib.SMTP(cfg["smtp_server"], int(cfg["smtp_port"]), timeout=30) as server:
-        server.starttls()
+    port = int(cfg["smtp_port"])
+    # 465 is implicit TLS (encrypted from the first byte); 587 is plain text upgraded via STARTTLS.
+    # Using the wrong one makes the server drop the connection (SMTPServerDisconnected).
+    if port == 465:
+        server = smtplib.SMTP_SSL(cfg["smtp_server"], port, timeout=30)
+    else:
+        server = smtplib.SMTP(cfg["smtp_server"], port, timeout=30)
+    with server:
+        if port != 465:
+            server.starttls()
         server.login(cfg["sender"], cfg["password"])
         server.send_message(msg)
 
