@@ -147,18 +147,27 @@ YouTube: https://www.youtube.com/@gambilldataengineering
     msg["From"] = cfg["sender"]
     msg["To"] = to_email
 
+    host = str(cfg["smtp_server"]).strip()
     port = int(cfg["smtp_port"])
-    # 465 is implicit TLS (encrypted from the first byte); 587 is plain text upgraded via STARTTLS.
-    # Using the wrong one makes the server drop the connection (SMTPServerDisconnected).
-    if port == 465:
-        server = smtplib.SMTP_SSL(cfg["smtp_server"], port, timeout=30)
-    else:
-        server = smtplib.SMTP(cfg["smtp_server"], port, timeout=30)
-    with server:
-        if port != 465:
-            server.starttls()
-        server.login(cfg["sender"], cfg["password"])
-        server.send_message(msg)
+    # TODO: drop the step tracking once email is working again.
+    step = f"connect to {host!r}:{port}"
+    try:
+        # 465 is implicit TLS (encrypted from the first byte); 587 is plain text upgraded via STARTTLS.
+        # Using the wrong one makes the server drop the connection (SMTPServerDisconnected).
+        if port == 465:
+            server = smtplib.SMTP_SSL(host, port, timeout=30)
+        else:
+            server = smtplib.SMTP(host, port, timeout=30)
+        with server:
+            if port != 465:
+                step = "STARTTLS"
+                server.starttls()
+            step = f"login as {cfg['sender']!r}"
+            server.login(cfg["sender"], cfg["password"])
+            step = "send"
+            server.send_message(msg)
+    except Exception as e:
+        raise RuntimeError(f"failed at step [{step}]: {type(e).__name__}: {e}") from e
 
 
 def safe_filename_part(text: str) -> str:
