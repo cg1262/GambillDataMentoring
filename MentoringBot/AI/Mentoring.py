@@ -368,8 +368,11 @@ if st.session_state.stage == "assessment":
                 # Models cluster the correct answer in one slot; shuffle so position carries no signal.
                 for q in questions:
                     random.shuffle(q["choices"])
-            except Exception:
-                st.error("There was a problem generating your quiz. Please try submitting again.")
+            except Exception as e:
+                print(f"Quiz generation failed: {e!r}")
+                # TODO: drop the error detail once the model call is working again.
+                st.error(f"There was a problem generating your quiz ({type(e).__name__}: {e}). "
+                         "Please try submitting again.")
                 st.stop()
 
         st.session_state.questions = questions
