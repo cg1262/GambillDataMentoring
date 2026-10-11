@@ -84,7 +84,7 @@ def chat(prompt: str, json_mode: bool = False, temperature: float = 0.5) -> str:
     response = client.chat.completions.create(
         model=OPENAI_MODEL,
         messages=[{"role": "user", "content": prompt}],
-        temperature=temperature,
+        #temperature=temperature,
         **kwargs,
     )
     return response.choices[0].message.content
@@ -95,7 +95,7 @@ def chat_stream(prompt: str, temperature: float = 0.5):
     stream = client.chat.completions.create(
         model=OPENAI_MODEL,
         messages=[{"role": "user", "content": prompt}],
-        temperature=temperature,
+        #temperature=temperature,
         stream=True,
     )
     for chunk in stream:
@@ -351,7 +351,7 @@ if st.session_state.stage == "assessment":
 
         # Start the project suggestion now; it will be ready by the time the quiz is done.
         st.session_state.project_future = get_executor().submit(
-            chat, project_prompt(technical_skills, data_interests), temperature=0.7)
+            chat, project_prompt(technical_skills, data_interests) )
 
         with st.spinner("Generating your personalized quiz..."):
             try:
@@ -446,7 +446,7 @@ elif st.session_state.stage == "results":
                 project = st.session_state.project_future.result()
             except Exception:
                 try:
-                    project = chat(project_prompt(a["technical_skills"], a["interests"]), temperature=0.7)
+                    project = chat(project_prompt(a["technical_skills"], a["interests"]))
                 except Exception:
                     st.error("There was a problem generating your project suggestion.")
                     st.button("Try again")
